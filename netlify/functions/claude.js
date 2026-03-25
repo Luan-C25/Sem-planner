@@ -1,4 +1,3 @@
-
 // Netlify serverless function — proxies scan requests to Google Gemini API
 // Free tier: no credit card needed. Get key at aistudio.google.com
 // Set env var GEMINI_API_KEY in Netlify → Site Settings → Environment Variables
@@ -32,7 +31,7 @@ exports.handler = async (event) => {
     parts.push({ text: prompt });
 
     const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite-preview-06-17:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -44,6 +43,8 @@ exports.handler = async (event) => {
     );
 
     const data = await geminiRes.json();
+    console.log('Gemini status:', geminiRes.status);
+    console.log('Gemini response:', JSON.stringify(data).slice(0, 300));
 
     if (!geminiRes.ok) {
       return {
@@ -67,4 +68,3 @@ exports.handler = async (event) => {
     };
   }
 };
-
