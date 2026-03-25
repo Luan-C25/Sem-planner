@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sem — Student Planner</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Epilogue:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0f;--surface:#13131a;--surface2:#1a1a24;
+  --border:#2a2a3a;--text:#f0f0f5;--muted:#7a7a9a;
+  --teal:#00d4aa;--violet:#7c3aed;--amber:#f59e0b;
+  --red:#ef4444;--blue:#3b82f6;--green:#22c55e;
+}
+body{font-family:'Epilogue',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* ── ONBOARDING ─────────────────────────────── */
+#onboarding{
+  position:fixed;inset:0;background:var(--bg);z-index:1000;
+  display:flex;align-items:center;justify-content:center;
+  padding:20px;
+}
+#onboarding.hidden{display:none}
+.ob-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:24px;padding:40px 36px;width:100%;max-width:480px;
+  position:relative;overflow:hidden;
+}
+.ob-card::before{
+  content:'';position:absolute;top:-60px;right:-60px;
+  width:220px;height:220px;
+  background:radial-gradient(circle,rgba(0,212,170,0.12) 0%,transparent 70%);
+  pointer-events:none;
+}
+.ob-logo{font-family:'Anton',sans-serif;font-size:32px;letter-spacing:3px;color:var(--teal);margin-bottom:6px}
+.ob-tagline{font-size:13px;color:var(--muted);margin-bottom:32px}
+
+/* steps */
+.ob-step{display:none}.ob-step.active{display:block}
+.ob-step-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.ob-step h2{font-weight:700;font-size:22px;margin-bottom:6px}
+.ob-step p{font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.6}
+
+/* progress dots */
+.ob-dots{display:flex;gap:6px;margin-bottom:28px}
+.ob-dot{width:6px;height:6px;border-radius:50%;background:var(--border);transition:background 0.3s,width 0.3s}
+.ob-dot.active{background:var(--teal);width:20px;border-radius:3px}
+.ob-dot.done{background:var(--teal);opacity:0.4}
+
+/* uni search */
+.ob-search-wrap{position:relative;margin-bottom:12px}
+.ob-search{
+  width:100%;background:var(--surface2);border:1px solid var(--border);
+  border-radius:12px;padding:12px 16px;color:var(--text);
+  font-size:14px;font-family:'Epilogue',sans-serif;outline:none;
+  transition:border-color 0.2s;
+}
+.ob-search:focus{border-color:var(--teal)}
+.ob-search::placeholder{color:var(--muted)}
+.ob-dropdown{
+  position:absolute;top:calc(100% + 4px);left:0;right:0;
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:12px;overflow:hidden;z-index:10;display:none;
+  max-height:220px;overflow-y:auto;
+}
+.ob-dropdown.open{display:block}
+.ob-uni-item{
+  display:flex;align-items:center;gap:12px;
+  padding:10px 14px;cursor:pointer;transition:background 0.15s;
+  font-size:14px;
+}
+.ob-uni-item:hover{background:rgba(0,212,170,0.08)}
+.ob-uni-item .uni-state{font-size:11px;color:var(--muted);margin-left:auto}
+.ob-uni-item.selected{background:rgba(0,212,170,0.1);color:var(--teal)}
+
+.ob-selected-uni{
+  display:flex;align-items:center;gap:10px;
+  background:rgba(0,212,170,0.08);border:1px solid rgba(0,212,170,0.3);
+  border-radius:10px;padding:10px 14px;font-size:14px;margin-bottom:16px;
+}
+.ob-selected-uni svg{flex-shrink:0}
+
+/* calendar method */
+.ob-methods{display:flex;flex-direction:column;gap:10px;margin-bottom:20px}
+.ob-method{
+  display:flex;align-items:flex-start;gap:14px;
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:12px;padding:14px 16px;cursor:pointer;
+  transition:border-color 0.2s;
+}
+.ob-method:hover,.ob-method.active{border-color:var(--teal)}
+.ob-method.active{background:rgba(0,212,170,0.06)}
+.ob-method-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px}
+.ob-method-text strong{font-size:14px;font-weight:600;display:block;margin-bottom:2px}
+.ob-method-text span{font-size:12px;color:var(--muted)}
+.ob-method-badge{margin-left:auto;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 8px;border-radius:6px;flex-shrink:0;align-self:center}
+.badge-auto{background:rgba(0,212,170,0.15);color:var(--teal)}
+.badge-manual{background:rgba(122,122,154,0.15);color:var(--muted)}
+
+/* calendar upload drop */
+.ob-drop{
+  border:2px dashed var(--border);border-radius:12px;
+  padding:24px;text-align:center;cursor:pointer;
+  transition:border-color 0.2s,background 0.2s;
+  position:relative;margin-bottom:16px;
+}
+.ob-drop:hover,.ob-drop.drag{border-color:var(--teal);background:rgba(0,212,170,0.04)}
+.ob-drop input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.ob-drop-title{font-size:14px;font-weight:600;margin-bottom:4px}
+.ob-drop-sub{font-size:12px;color:var(--muted)}
+
+/* manual date inputs */
+.ob-date-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.ob-field{display:flex;flex-direction:column;gap:4px}
+.ob-field label{font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.ob-input{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:8px;padding:10px 12px;color:var(--text);
+  font-size:14px;font-family:'Epilogue',sans-serif;outline:none;
+  transition:border-color 0.2s;width:100%;
+}
+.ob-input:focus{border-color:var(--teal)}
+.ob-input[type=date]::-webkit-calendar-picker-indicator{filter:invert(0.5)}
+
+/* scanning state */
+.ob-scanning{display:none;text-align:center;padding:20px 0}
+.ob-scanning.active{display:block}
+.ob-spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--teal);border-radius:50%;margin:0 auto 12px;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ob-scan-msg{font-size:13px;color:var(--muted)}
+.ob-scan-msg strong{color:var(--teal)}
+
+/* calendar preview */
+.ob-cal-preview{display:none;margin-bottom:16px}
+.ob-cal-preview.active{display:block}
+.ob-cal-info{background:rgba(0,212,170,0.08);border:1px solid rgba(0,212,170,0.25);border-radius:10px;padding:14px 16px}
+.ob-cal-row{display:flex;justify-content:space-between;font-size:13px;padding:4px 0}
+.ob-cal-row span:first-child{color:var(--muted)}
+.ob-cal-row span:last-child{font-weight:600;color:var(--teal)}
+
+/* buttons */
+.ob-btn{
+  width:100%;background:var(--teal);color:#000;border:none;
+  border-radius:12px;padding:14px;font-size:15px;font-weight:700;
+  cursor:pointer;font-family:'Epilogue',sans-serif;transition:opacity 0.2s;
+}
+.ob-btn:hover{opacity:0.88}
+.ob-btn:disabled{opacity:0.4;cursor:not-allowed}
+.ob-btn-ghost{
+  width:100%;background:transparent;color:var(--muted);border:1px solid var(--border);
+  border-radius:12px;padding:12px;font-size:14px;cursor:pointer;
+  font-family:'Epilogue',sans-serif;margin-top:10px;transition:border-color 0.2s;
+}
+.ob-btn-ghost:hover{border-color:var(--muted)}
+.ob-error{font-size:12px;color:var(--red);margin-bottom:12px;display:none}
+.ob-error.active{display:block}
+
+/* ── MAIN APP ────────────────────────────────── */
+#app{display:none}
+#app.visible{display:block}
+.app{max-width:900px;margin:0 auto;padding:20px 16px 40px}
+
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:gap}
+.logo{font-family:'Anton',sans-serif;font-size:28px;letter-spacing:2px;color:var(--teal)}
+.logo span{color:var(--text);opacity:0.3;font-size:14px;font-family:'Epilogue',sans-serif;font-weight:400;margin-left:8px;letter-spacing:0}
+.header-right{display:flex;align-items:center;gap:10px}
+.week-badge{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-size:13px;color:var(--muted)}
+.week-badge strong{color:var(--teal)}
+.reset-btn{background:transparent;border:1px solid var(--border);border-radius:20px;padding:6px 12px;color:var(--muted);font-size:12px;cursor:pointer;font-family:'Epilogue',sans-serif;transition:border-color 0.2s}
+.reset-btn:hover{border-color:var(--red);color:var(--red)}
+
+/* UNI BANNER */
+.uni-banner{
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(0,212,170,0.06);border:1px solid rgba(0,212,170,0.2);
+  border-radius:14px;padding:12px 18px;margin-bottom:16px;flex-wrap:wrap;gap:8px;
+}
+.uni-banner-left{font-size:13px}
+.uni-banner-left strong{color:var(--teal)}
+.uni-banner-right{font-size:12px;color:var(--muted)}
+
+/* SCAN ZONE */
+.scan-zone{
+  border:2px dashed var(--border);border-radius:20px;
+  padding:28px 20px;text-align:center;cursor:pointer;
+  transition:border-color 0.2s,background 0.2s;
+  position:relative;margin-bottom:20px;
+}
+.scan-zone:hover,.scan-zone.drag-over{border-color:var(--teal);background:rgba(0,212,170,0.04)}
+.scan-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.scan-icon{margin:0 auto 12px;opacity:0.5;display:block}
+.scan-title{font-weight:700;font-size:15px;margin-bottom:4px}
+.scan-sub{font-size:12px;color:var(--muted);margin-bottom:12px}
+.scan-tags{display:flex;justify-content:center;gap:6px;flex-wrap:wrap}
+.scan-tag{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+
+.scan-progress{display:none;background:var(--surface);border:1px solid var(--teal);border-radius:16px;padding:20px;text-align:center;margin-bottom:16px}
+.scan-progress.active{display:block}
+.scan-spinner{width:30px;height:30px;border:3px solid var(--border);border-top-color:var(--teal);border-radius:50%;margin:0 auto 10px;animation:spin 0.8s linear infinite}
+.scan-msg{font-size:13px;color:var(--muted)}
+.scan-msg strong{color:var(--teal)}
+
+.scan-result{display:none;background:var(--surface);border:1px solid var(--green);border-radius:16px;padding:18px;margin-bottom:16px}
+.scan-result.active{display:block}
+.result-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.result-badge{background:rgba(34,197,94,0.15);color:var(--green);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700}
+.result-items{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;max-height:200px;overflow-y:auto}
+.result-item{display:flex;align-items:center;gap:10px;background:var(--surface2);border-radius:8px;padding:8px 12px;font-size:13px}
+.result-item-check{width:16px;height:16px;border-radius:50%;border:2px solid var(--green);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.result-item-name{flex:1;font-weight:600}
+.result-item-meta{color:var(--muted);font-size:12px}
+.result-item-weight{font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;background:rgba(245,158,11,0.15);color:var(--amber)}
+.result-btns{display:flex;gap:8px}
+.btn-import{flex:1;background:var(--teal);color:#000;border:none;border-radius:10px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Epilogue',sans-serif;transition:opacity 0.2s}
+.btn-import:hover{opacity:0.85}
+.btn-discard{flex:1;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:10px;padding:11px;font-size:13px;cursor:pointer;font-family:'Epilogue',sans-serif}
+
+.scan-error{display:none;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);border-radius:12px;padding:12px 16px;margin-bottom:14px;font-size:13px;color:var(--red)}
+.scan-error.active{display:block}
+
+/* CRUNCH HERO */
+.crunch-hero{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:24px;margin-bottom:20px;position:relative;overflow:hidden}
+.crunch-hero::before{content:'';position:absolute;top:-40px;right:-40px;width:200px;height:200px;background:radial-gradient(circle,rgba(124,58,237,0.15) 0%,transparent 70%);pointer-events:none}
+.crunch-label{font-size:11px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:8px}
+.crunch-row{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.crunch-number{font-family:'Anton',sans-serif;font-size:72px;line-height:1;letter-spacing:-2px}
+.crunch-number.low{color:var(--green)}.crunch-number.mid{color:var(--amber)}.crunch-number.high{color:var(--red)}
+.crunch-info{flex:1;min-width:160px}
+.crunch-status{font-weight:700;font-size:18px;margin-bottom:4px}
+.crunch-desc{font-size:13px;color:var(--muted);line-height:1.5}
+
+/* PRESSURE MAP */
+.pressure-map{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:20px;margin-bottom:20px}
+.section-label{font-size:11px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:12px}
+.weeks-grid{display:grid;gap:4px;margin-bottom:12px}
+.week-cell{aspect-ratio:1;border-radius:6px;cursor:pointer;position:relative;transition:transform 0.15s;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1px}
+.week-cell:hover{transform:scale(1.1);z-index:2}
+.week-cell.current::after{content:'';position:absolute;inset:-2px;border-radius:8px;border:2px solid var(--teal)}
+.week-cell.selected{outline:2px solid white;outline-offset:2px}
+.week-cell .wnum{font-size:8px;font-weight:700;opacity:0.8;line-height:1}
+.week-cell .wdot{width:4px;height:4px;border-radius:50%;background:white;opacity:0.6}
+.heat-legend{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted)}
+.heat-bar{flex:1;height:6px;border-radius:3px;background:linear-gradient(to right,#1a3d2e,#2a5a3a,#6b8c42,#c8792a,#c0392b)}
+
+/* BENTO */
+.bento{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+.bento-wide{grid-column:span 2}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px}
+.card-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+
+.subjects{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.subject-pill{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:30px;padding:6px 12px;font-size:13px;cursor:default}
+.subject-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat{background:var(--surface2);border-radius:12px;padding:14px;text-align:center}
+.stat-val{font-family:'Anton',sans-serif;font-size:32px;color:var(--teal)}
+.stat-lbl{font-size:11px;color:var(--muted);margin-top:2px;letter-spacing:1px;text-transform:uppercase}
+
+.assign-list{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.assign-item{display:flex;align-items:center;gap:12px;background:var(--surface2);border-radius:10px;padding:10px 14px;cursor:pointer;transition:background 0.15s}
+.assign-item:hover{background:#20202e}
+.assign-item.done-item{opacity:0.4}
+.assign-days{font-family:'Anton',sans-serif;font-size:22px;line-height:1;min-width:36px;text-align:center}
+.assign-days.urgent{color:var(--red)}.assign-days.soon{color:var(--amber)}.assign-days.ok{color:var(--green)}
+.assign-info{flex:1}
+.assign-name{font-size:14px;font-weight:600;margin-bottom:2px}
+.assign-meta{font-size:12px;color:var(--muted)}
+.assign-weight{font-size:11px;font-weight:700;letter-spacing:1px;padding:4px 8px;border-radius:6px}
+.assign-weight.heavy{background:rgba(239,68,68,0.15);color:var(--red)}
+.assign-weight.medium{background:rgba(245,158,11,0.15);color:var(--amber)}
+.assign-weight.light{background:rgba(34,197,94,0.15);color:var(--green)}
+
+.add-form{display:flex;gap:8px;flex-wrap:wrap;background:var(--surface2);border-radius:12px;padding:12px}
+.add-form input,.add-form select{background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 10px;font-size:13px;font-family:'Epilogue',sans-serif;outline:none;transition:border-color 0.2s}
+.add-form input:focus,.add-form select:focus{border-color:var(--teal)}
+.add-form input{flex:2;min-width:120px}
+.add-form select{flex:1;min-width:80px}
+.add-btn{background:var(--teal);color:#000;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Epilogue',sans-serif;transition:opacity 0.2s;white-space:nowrap}
+.add-btn:hover{opacity:0.85}
+.add-btn-ghost{background:transparent;border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:13px;color:var(--muted);cursor:pointer;font-family:'Epilogue',sans-serif;white-space:nowrap}
+.add-btn-ghost:hover{border-color:var(--muted)}
+
+.tooltip{position:fixed;background:#1e1e2e;border:1px solid var(--teal);border-radius:10px;padding:10px 14px;font-size:12px;pointer-events:none;z-index:500;display:none;max-width:200px;line-height:1.5}
+.tooltip strong{color:var(--teal);display:block;margin-bottom:2px}
+
+@media(max-width:600px){
+  .bento{grid-template-columns:1fr}.bento-wide{grid-column:span 1}
+  .crunch-number{font-size:54px}
+  .ob-date-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════
+     ONBOARDING
+════════════════════════════════════════ -->
+<div id="onboarding">
+<div class="ob-card">
+  <div class="ob-logo">SEM</div>
+  <div class="ob-tagline">Your semester, mapped. No more surprises.</div>
+
+  <div class="ob-dots" id="ob-dots">
+    <div class="ob-dot active"></div>
+    <div class="ob-dot"></div>
+    <div class="ob-dot"></div>
+  </div>
+
+  <!-- STEP 1: Pick uni -->
+  <div class="ob-step active" id="step-1">
+    <div class="ob-step-label">Step 1 of 3</div>
+    <h2>Where do you study?</h2>
+    <p>We'll use this to find your semester dates automatically.</p>
+    <div class="ob-search-wrap">
+      <input class="ob-search" id="uni-search" type="text" placeholder="Search your university..." autocomplete="off"/>
+      <div class="ob-dropdown" id="uni-dropdown"></div>
+    </div>
+    <div id="selected-uni-display" style="display:none" class="ob-selected-uni">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+      <span id="selected-uni-name"></span>
+    </div>
+    <div class="ob-error" id="step1-error">Please select your university to continue.</div>
+    <button class="ob-btn" id="step1-next" onclick="goStep(2)">Continue</button>
+    <button class="ob-btn-ghost" onclick="skipOnboarding()">Skip setup — enter manually</button>
+  </div>
+
+  <!-- STEP 2: Calendar -->
+  <div class="ob-step" id="step-2">
+    <div class="ob-step-label">Step 2 of 3</div>
+    <h2>Set up your semester</h2>
+    <p>How do you want to load your academic calendar?</p>
+
+    <div class="ob-methods">
+      <div class="ob-method active" id="method-auto" onclick="selectMethod('auto')">
+        <div class="ob-method-icon" style="background:rgba(0,212,170,0.12)">⚡</div>
+        <div class="ob-method-text">
+          <strong>Auto-detect</strong>
+          <span>We'll fetch your uni's calendar automatically</span>
+        </div>
+        <div class="ob-method-badge badge-auto">RECOMMENDED</div>
+      </div>
+      <div class="ob-method" id="method-pdf" onclick="selectMethod('pdf')">
+        <div class="ob-method-icon" style="background:rgba(122,122,154,0.1)">📄</div>
+        <div class="ob-method-text">
+          <strong>Upload calendar PDF</strong>
+          <span>Download from your uni site and upload here</span>
+        </div>
+        <div class="ob-method-badge badge-manual">MANUAL</div>
+      </div>
+      <div class="ob-method" id="method-dates" onclick="selectMethod('dates')">
+        <div class="ob-method-icon" style="background:rgba(122,122,154,0.1)">✏️</div>
+        <div class="ob-method-text">
+          <strong>Enter dates manually</strong>
+          <span>Pick your semester start and week count</span>
+        </div>
+        <div class="ob-method-badge badge-manual">MANUAL</div>
+      </div>
+    </div>
+
+    <!-- PDF drop -->
+    <div id="pdf-drop-area" style="display:none">
+      <div class="ob-drop" id="ob-drop">
+        <input type="file" id="cal-file-input" accept=".pdf,image/*" onchange="handleCalFile(this.files[0])"/>
+        <div class="ob-drop-title">Drop your academic calendar PDF here</div>
+        <div class="ob-drop-sub">Or click to browse — download it from your uni website first</div>
+      </div>
+    </div>
+
+    <!-- Manual dates -->
+    <div id="manual-dates-area" style="display:none">
+      <div class="ob-date-grid">
+        <div class="ob-field">
+          <label>Semester start date</label>
+          <input type="date" class="ob-input" id="sem-start"/>
+        </div>
+        <div class="ob-field">
+          <label>Number of weeks</label>
+          <input type="number" class="ob-input" id="sem-weeks" value="13" min="8" max="18"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scanning -->
+    <div class="ob-scanning" id="ob-scanning">
+      <div class="ob-spinner"></div>
+      <div class="ob-scan-msg"><strong>Reading your academic calendar...</strong><br>Extracting semester dates and key weeks</div>
+    </div>
+
+    <!-- Calendar preview -->
+    <div class="ob-cal-preview" id="ob-cal-preview">
+      <div class="ob-cal-info">
+        <div class="ob-cal-row"><span>Semester / Trimester</span><span id="prev-period">—</span></div>
+        <div class="ob-cal-row"><span>Start date</span><span id="prev-start">—</span></div>
+        <div class="ob-cal-row"><span>End date</span><span id="prev-end">—</span></div>
+        <div class="ob-cal-row"><span>Teaching weeks</span><span id="prev-weeks">—</span></div>
+      </div>
+    </div>
+
+    <div class="ob-error" id="step2-error"></div>
+    <button class="ob-btn" id="step2-next" onclick="goStep(3)">Continue</button>
+    <button class="ob-btn-ghost" onclick="goStep(1)">← Back</button>
+  </div>
+
+  <!-- STEP 3: Subjects -->
+  <div class="ob-step" id="step-3">
+    <div class="ob-step-label">Step 3 of 3</div>
+    <h2>Add your subjects</h2>
+    <p>Add the courses you're enrolled in this semester. You can always add more later.</p>
+
+    <div id="ob-subjects" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px"></div>
+
+    <div style="display:flex;gap:8px;margin-bottom:20px">
+      <input class="ob-input" id="ob-subj-name" placeholder="Subject name e.g. Marketing Strategy" style="flex:1"/>
+      <select class="ob-input" id="ob-subj-color" style="width:90px;flex-shrink:0">
+        <option value="#7c3aed">Violet</option>
+        <option value="#00d4aa">Teal</option>
+        <option value="#f59e0b">Amber</option>
+        <option value="#3b82f6">Blue</option>
+        <option value="#ef4444">Red</option>
+        <option value="#22c55e">Green</option>
+        <option value="#ec4899">Pink</option>
+      </select>
+      <button class="add-btn" onclick="obAddSubject()">Add</button>
+    </div>
+
+    <div class="ob-error" id="step3-error">Add at least one subject to continue.</div>
+    <button class="ob-btn" onclick="finishOnboarding()">Launch Sem →</button>
+    <button class="ob-btn-ghost" onclick="goStep(2)">← Back</button>
+  </div>
+
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     MAIN APP
+════════════════════════════════════════ -->
+<div id="app">
+<div class="app">
+
+  <div class="header">
+    <div class="logo">SEM<span>student planner</span></div>
+    <div class="header-right">
+      <div class="week-badge">Week <strong id="cur-week-label">1</strong> of <strong id="total-weeks-label">13</strong></div>
+      <button class="reset-btn" onclick="resetApp()">Reset</button>
+    </div>
+  </div>
+
+  <div class="uni-banner" id="uni-banner">
+    <div class="uni-banner-left">Studying at <strong id="banner-uni">—</strong></div>
+    <div class="uni-banner-right" id="banner-period">—</div>
+  </div>
+
+  <!-- ASSESSMENT SCANNER -->
+  <div class="scan-zone" id="scan-zone">
+    <input type="file" id="file-input" accept=".pdf,image/*" onchange="handleAssessFile(this.files[0])"/>
+    <svg class="scan-icon" width="40" height="40" viewBox="0 0 48 48" fill="none">
+      <rect x="6" y="6" width="36" height="36" rx="8" stroke="#00d4aa" stroke-width="1.5"/>
+      <path d="M14 24h20M24 14v20" stroke="#00d4aa" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M6 18h4M6 30h4M42 18h-4M42 30h-4M18 6v4M30 6v4M18 42v-4M30 42v-4" stroke="#00d4aa" stroke-width="1.2" stroke-linecap="round"/>
+    </svg>
+    <div class="scan-title">Upload your course profile or assessment overview</div>
+    <div class="scan-sub">Claude reads it and auto-imports all assignments, weights, and due dates</div>
+    <div class="scan-tags">
+      <span class="scan-tag">PDF</span>
+      <span class="scan-tag">Screenshot</span>
+      <span class="scan-tag">JPG / PNG</span>
+    </div>
+  </div>
+
+  <div class="scan-progress" id="scan-progress">
+    <div class="scan-spinner"></div>
+    <div class="scan-msg"><strong>Scanning your document...</strong><br>Claude is extracting your assessment details</div>
+  </div>
+  <div class="scan-error" id="scan-error"></div>
+  <div class="scan-result" id="scan-result">
+    <div class="result-header">
+      <div style="font-weight:700;font-size:15px">Found these assessments</div>
+      <div class="result-badge" id="result-count">0 found</div>
+    </div>
+    <div class="result-items" id="result-items"></div>
+    <div class="result-btns">
+      <button class="btn-discard" onclick="discardScan()">Discard</button>
+      <button class="btn-import" onclick="importScan()">Import all into Sem</button>
+    </div>
+  </div>
+
+  <!-- CRUNCH HERO -->
+  <div class="crunch-hero">
+    <div class="crunch-label">Crunch Score — Week <span id="crunch-week-label">1</span></div>
+    <div class="crunch-row">
+      <div class="crunch-number" id="crunch-score">0</div>
+      <div class="crunch-info">
+        <div class="crunch-status" id="crunch-status">All Clear</div>
+        <div class="crunch-desc" id="crunch-desc">Nothing due this week.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRESSURE MAP -->
+  <div class="pressure-map">
+    <div class="section-label">Semester Pressure Map — click any week</div>
+    <div class="weeks-grid" id="weeks-grid"></div>
+    <div class="heat-legend"><span>Chill</span><div class="heat-bar"></div><span>Crunch</span></div>
+  </div>
+
+  <!-- BENTO -->
+  <div class="bento">
+    <div class="card">
+      <div class="card-label">Subjects</div>
+      <div class="subjects" id="subjects-list"></div>
+      <button class="add-btn-ghost" style="width:100%;font-size:12px;padding:8px" onclick="promptAddSubject()">+ Add Subject</button>
+    </div>
+    <div class="card">
+      <div class="card-label">Semester Stats</div>
+      <div class="stats">
+        <div class="stat"><div class="stat-val" id="stat-total">0</div><div class="stat-lbl">Total</div></div>
+        <div class="stat"><div class="stat-val" id="stat-done">0</div><div class="stat-lbl">Done</div></div>
+        <div class="stat"><div class="stat-val" id="stat-due">0</div><div class="stat-lbl">Upcoming</div></div>
+      </div>
+    </div>
+    <div class="card bento-wide">
+      <div class="card-label">Upcoming Assignments — Week <span id="assign-week-label">1</span></div>
+      <div class="assign-list" id="assign-list"></div>
+      <div class="add-form">
+        <input type="text" id="inp-name" placeholder="Assignment name..."/>
+        <select id="inp-subject"></select>
+        <select id="inp-weight">
+          <option value="5">5%</option><option value="10">10%</option>
+          <option value="15">15%</option><option value="20">20%</option>
+          <option value="25">25%</option><option value="30">30%</option>
+          <option value="40">40%</option><option value="50">50%</option>
+        </select>
+        <input type="number" id="inp-week" placeholder="Week#" min="1" style="max-width:68px"/>
+        <button class="add-btn" onclick="addAssignment()">+ Add</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<!-- ═══════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════ -->
+<script>
+// ── UNI DATABASE ──────────────────────────────────────────────────
+const UNI_DB = [
+  {name:'Griffith University',state:'QLD',calUrl:'https://www.griffith.edu.au/__data/assets/pdf_file/0019/1005418/2025_Academic_Calendar.pdf',periods:['Trimester 1','Trimester 2','Trimester 3'],weeks:12},
+  {name:'Queensland University of Technology (QUT)',state:'QLD',calUrl:'https://cms.qut.edu.au/__data/assets/pdf_file/0003/1356042/2025-academic-calendar.pdf',periods:['Semester 1','Semester 2'],weeks:13},
+  {name:'Bond University',state:'QLD',calUrl:'https://bond.edu.au/current-students/study-information/enrolment/academic-calendar',periods:['Semester 1','Semester 2','Semester 3'],weeks:14},
+  {name:'University of Queensland (UQ)',state:'QLD',calUrl:'',periods:['Semester 1','Semester 2'],weeks:13},
+  {name:'Southern Cross University',state:'QLD/NSW',calUrl:'',periods:['Term 1','Term 2','Term 3','Term 4'],weeks:10},
+  {name:'Monash University',state:'VIC',calUrl:'',periods:['Semester 1','Semester 2'],weeks:12},
+  {name:'University of Melbourne',state:'VIC',calUrl:'',periods:['Semester 1','Semester 2'],weeks:12},
+  {name:'University of Sydney',state:'NSW',calUrl:'',periods:['Semester 1','Semester 2'],weeks:13},
+  {name:'UNSW Sydney',state:'NSW',calUrl:'',periods:['Term 1','Term 2','Term 3'],weeks:10},
+  {name:'Australian National University (ANU)',state:'ACT',calUrl:'',periods:['Semester 1','Semester 2'],weeks:12},
+  {name:'University of Adelaide',state:'SA',calUrl:'',periods:['Semester 1','Semester 2'],weeks:13},
+  {name:'Curtin University',state:'WA',calUrl:'',periods:['Semester 1','Semester 2'],weeks:13},
+  {name:'Deakin University',state:'VIC',calUrl:'',periods:['Trimester 1','Trimester 2','Trimester 3'],weeks:12},
+  {name:'RMIT University',state:'VIC',calUrl:'',periods:['Semester 1','Semester 2'],weeks:13},
+  {name:'University of Wollongong',state:'NSW',calUrl:'',periods:['Autumn','Spring'],weeks:13},
+  {name:'University of Newcastle',state:'NSW',calUrl:'',periods:['Semester 1','Semester 2'],weeks:13},
+  {name:'Charles Sturt University',state:'NSW',calUrl:'',periods:['Session 1','Session 2'],weeks:15},
+  {name:'La Trobe University',state:'VIC',calUrl:'',periods:['Semester 1','Semester 2'],weeks:12},
+  {name:'Macquarie University',state:'NSW',calUrl:'',periods:['Semester 1','Semester 2'],weeks:13},
+  {name:'University of Technology Sydney (UTS)',state:'NSW',calUrl:'',periods:['Autumn','Spring'],weeks:12},
+];
+
+// ── APP STATE ──────────────────────────────────────────────────────
+let state = {
+  uni: null,         // {name, state, weeks, periods}
+  semStart: null,    // Date
+  semWeeks: 13,
+  semPeriod: '',
+  subjects: [],
+  assignments: [],
+  selectedWeek: 1,
+  currentWeek: 1,
+};
+let pendingScan = null;
+let nextId = 1;
+const COLORS = ['#7c3aed','#3b82f6','#f59e0b','#00d4aa','#ef4444','#22c55e','#ec4899'];
+
+// ── LOCALSTORAGE ───────────────────────────────────────────────────
+const LS_KEY = 'sem_v2';
+function save() {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch(e){}
+}
+function load() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return false;
+    const s = JSON.parse(raw);
+    if (s.semStart) s.semStart = new Date(s.semStart);
+    Object.assign(state, s);
+    return true;
+  } catch(e) { return false; }
+}
+
+// ── ONBOARDING: UNI SEARCH ────────────────────────────────────────
+let selectedUni = null;
+const uniSearch = document.getElementById('uni-search');
+const uniDropdown = document.getElementById('uni-dropdown');
+
+uniSearch.addEventListener('input', () => {
+  const q = uniSearch.value.toLowerCase().trim();
+  if (!q) { uniDropdown.classList.remove('open'); return; }
+  const matches = UNI_DB.filter(u => u.name.toLowerCase().includes(q) || u.state.toLowerCase().includes(q)).slice(0,6);
+  if (!matches.length) { uniDropdown.classList.remove('open'); return; }
+  uniDropdown.innerHTML = matches.map(u =>
+    `<div class="ob-uni-item" onclick="pickUni(${UNI_DB.indexOf(u)})">
+      <span>${u.name}</span>
+      <span class="uni-state">${u.state}</span>
+    </div>`
+  ).join('');
+  uniDropdown.classList.add('open');
+});
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#uni-search') && !e.target.closest('#uni-dropdown'))
+    uniDropdown.classList.remove('open');
+});
+
+function pickUni(idx) {
+  selectedUni = UNI_DB[idx];
+  uniSearch.value = selectedUni.name;
+  uniDropdown.classList.remove('open');
+  document.getElementById('selected-uni-display').style.display = 'flex';
+  document.getElementById('selected-uni-name').textContent = selectedUni.name + ' · ' + selectedUni.state;
+  document.getElementById('step1-error').classList.remove('active');
+}
+
+// ── ONBOARDING: STEPS ────────────────────────────────────────────
+let obCalData = null; // {start, end, weeks, period} from scan
+let obMethod = 'auto';
+
+function goStep(n) {
+  if (n === 2 && !selectedUni) {
+    document.getElementById('step1-error').classList.add('active');
+    return;
+  }
+  if (n === 3) {
+    const valid = validateStep2();
+    if (!valid) return;
+  }
+  document.querySelectorAll('.ob-step').forEach(s => s.classList.remove('active'));
+  document.getElementById('step-'+n).classList.add('active');
+  updateDots(n);
+}
+
+function updateDots(n) {
+  const dots = document.querySelectorAll('.ob-dot');
+  dots.forEach((d, i) => {
+    d.classList.remove('active','done');
+    if (i+1 === n) d.classList.add('active');
+    else if (i+1 < n) d.classList.add('done');
+  });
+}
+
+function selectMethod(m) {
+  obMethod = m;
+  document.querySelectorAll('.ob-method').forEach(el => el.classList.remove('active'));
+  document.getElementById('method-'+m).classList.add('active');
+  document.getElementById('pdf-drop-area').style.display = m === 'pdf' ? 'block' : 'none';
+  document.getElementById('manual-dates-area').style.display = m === 'dates' ? 'block' : 'none';
+  // reset scan state
+  document.getElementById('ob-scanning').classList.remove('active');
+  document.getElementById('ob-cal-preview').classList.remove('active');
+  obCalData = null;
+}
+
+async function handleCalFile(file) {
+  if (!file) return;
+  document.getElementById('ob-scanning').classList.add('active');
+  document.getElementById('ob-cal-preview').classList.remove('active');
+  document.getElementById('step2-error').classList.remove('active');
+  try {
+    const base64 = await toBase64(file);
+    const isPDF = file.type === 'application/pdf';
+    const data = await scanCalendar(base64, isPDF, file.type);
+    obCalData = data;
+    showCalPreview(data);
+  } catch(e) {
+    document.getElementById('ob-scanning').classList.remove('active');
+    showStep2Error('Could not read calendar. Try entering dates manually.');
+  }
+}
+
+async function scanCalendar(base64, isPDF, mimeType) {
+  const today = new Date().toISOString().slice(0,10);
+  const prompt = `You are reading a university academic calendar document.
+Extract the current or upcoming teaching period (semester/trimester/term).
+Return ONLY a valid JSON object, no markdown, no explanation, no code fences:
+{"period":"Semester 1 2025","startDate":"2025-02-24","endDate":"2025-06-21","teachingWeeks":13}
+Use ISO date format YYYY-MM-DD. Today is ${today} — if multiple periods exist, pick the one closest to today.`;
+
+  const resp = await fetch('/.netlify/functions/claude', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt, imageBase64: base64, mimeType: mimeType || 'image/png' }),
+  });
+  if (!resp.ok) throw new Error('Function error ' + resp.status);
+  const { text } = await resp.json();
+  return JSON.parse(text.replace(/```json|```/g, '').trim());
+}
+
+function showCalPreview(data) {
+  document.getElementById('ob-scanning').classList.remove('active');
+  document.getElementById('prev-period').textContent = data.period || '—';
+  document.getElementById('prev-start').textContent = data.startDate ? formatDate(data.startDate) : '—';
+  document.getElementById('prev-end').textContent = data.endDate ? formatDate(data.endDate) : '—';
+  document.getElementById('prev-weeks').textContent = data.teachingWeeks || selectedUni?.weeks || 13;
+  document.getElementById('ob-cal-preview').classList.add('active');
+}
+
+function formatDate(s) {
+  const d = new Date(s+'T00:00:00');
+  return d.toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'});
+}
+
+function validateStep2() {
+  if (obMethod === 'auto') {
+    // Use uni defaults
+    obCalData = buildAutoCalData();
+    showCalPreview(obCalData);
+    return true;
+  }
+  if (obMethod === 'pdf') {
+    if (!obCalData) { showStep2Error('Please upload your academic calendar PDF first.'); return false; }
+    return true;
+  }
+  if (obMethod === 'dates') {
+    const start = document.getElementById('sem-start').value;
+    const weeks = parseInt(document.getElementById('sem-weeks').value);
+    if (!start || !weeks) { showStep2Error('Please enter a start date and number of weeks.'); return false; }
+    const startDate = new Date(start);
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + weeks * 7);
+    obCalData = {
+      period: 'My Semester',
+      startDate: start,
+      endDate: endDate.toISOString().slice(0,10),
+      teachingWeeks: weeks,
+    };
+    showCalPreview(obCalData);
+    return true;
+  }
+  return true;
+}
+
+function buildAutoCalData() {
+  const uni = selectedUni || {weeks:13,periods:['Semester 1']};
+  const now = new Date();
+  const year = now.getFullYear();
+  // Simple heuristic: if Jan-Jun → Semester 1, else Semester 2
+  const isFirstHalf = now.getMonth() < 6;
+  const period = isFirstHalf ? (uni.periods[0]||'Semester 1') : (uni.periods[1]||'Semester 2');
+  const startMonth = isFirstHalf ? 2 : 7; // March or August
+  const startDate = new Date(year, startMonth, 1);
+  // Find first Monday
+  while (startDate.getDay() !== 1) startDate.setDate(startDate.getDate()+1);
+  const endDate = new Date(startDate);
+  endDate.setDate(endDate.getDate() + (uni.weeks||13)*7);
+  return {
+    period: period + ' ' + year,
+    startDate: startDate.toISOString().slice(0,10),
+    endDate: endDate.toISOString().slice(0,10),
+    teachingWeeks: uni.weeks || 13,
+  };
+}
+
+function showStep2Error(msg) {
+  const el = document.getElementById('step2-error');
+  el.textContent = msg; el.classList.add('active');
+}
+
+// ── ONBOARDING: SUBJECTS ──────────────────────────────────────────
+let obSubjects = [];
+function obAddSubject() {
+  const name = document.getElementById('ob-subj-name').value.trim();
+  if (!name) return;
+  const color = document.getElementById('ob-subj-color').value;
+  obSubjects.push({id:nextId++,name,color});
+  document.getElementById('ob-subj-name').value = '';
+  renderObSubjects();
+}
+function renderObSubjects() {
+  const el = document.getElementById('ob-subjects');
+  el.innerHTML = obSubjects.map((s,i) =>
+    `<div style="display:flex;align-items:center;gap:10px;background:var(--surface2);border-radius:8px;padding:10px 14px;">
+      <span style="width:10px;height:10px;border-radius:50%;background:${s.color};flex-shrink:0"></span>
+      <span style="flex:1;font-size:14px">${s.name}</span>
+      <button onclick="removeObSubject(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;padding:0">×</button>
+    </div>`
+  ).join('');
+}
+function removeObSubject(i) { obSubjects.splice(i,1); renderObSubjects(); }
+
+function finishOnboarding() {
+  if (!obSubjects.length) {
+    document.getElementById('step3-error').classList.add('active'); return;
+  }
+  // Build state
+  const calData = obCalData || buildAutoCalData();
+  const semStart = new Date(calData.startDate + 'T00:00:00');
+  const now = new Date();
+  const msPerWeek = 7*24*60*60*1000;
+  const weekNum = Math.max(1, Math.min(
+    Math.ceil((now - semStart) / msPerWeek),
+    calData.teachingWeeks || 13
+  ));
+
+  state.uni = selectedUni || {name:'My University',state:'',weeks:13,periods:[]};
+  state.semStart = semStart;
+  state.semWeeks = calData.teachingWeeks || 13;
+  state.semPeriod = calData.period || 'Semester';
+  state.subjects = obSubjects;
+  state.assignments = [];
+  state.selectedWeek = weekNum;
+  state.currentWeek = weekNum;
+
+  save();
+  showApp();
+}
+
+function skipOnboarding() {
+  // Build a generic state
+  state.uni = {name:'My University',state:'',weeks:13};
+  state.semStart = new Date();
+  state.semWeeks = 13;
+  state.semPeriod = 'Semester';
+  state.subjects = [{id:nextId++,name:'My Subject',color:'#7c3aed'}];
+  state.assignments = [];
+  state.selectedWeek = 1;
+  state.currentWeek = 1;
+  save();
+  showApp();
+}
+
+// ── APP DISPLAY ────────────────────────────────────────────────────
+function showApp() {
+  document.getElementById('onboarding').classList.add('hidden');
+  document.getElementById('app').classList.add('visible');
+  renderAll();
+}
+
+function renderAll() {
+  updateBanner();
+  renderSubjects();
+  renderWeeks();
+  updateCrunchHero(state.selectedWeek);
+  renderAssignments();
+}
+
+function updateBanner() {
+  document.getElementById('banner-uni').textContent = state.uni?.name || '—';
+  document.getElementById('banner-period').textContent = state.semPeriod || '';
+  document.getElementById('cur-week-label').textContent = state.selectedWeek;
+  document.getElementById('total-weeks-label').textContent = state.semWeeks;
+}
+
+// ── WEEKS GRID ────────────────────────────────────────────────────
+function crunchScore(week) {
+  const wa = state.assignments.filter(a => a.week === week && !a.done);
+  if (!wa.length) return 0;
+  return Math.min(100, Math.round(wa.reduce((s,a)=>s+a.weight,0)*1.2 + wa.length*5));
+}
+function heatColor(score) {
+  if (score===0) return '#1a1a24';
+  if (score<20) return '#1a3d2e';
+  if (score<40) return '#2a5a3a';
+  if (score<55) return '#6b8c42';
+  if (score<70) return '#c8792a';
+  return '#c0392b';
+}
+function renderWeeks() {
+  const grid = document.getElementById('weeks-grid');
+  const w = state.semWeeks;
+  grid.style.gridTemplateColumns = `repeat(${w},1fr)`;
+  grid.innerHTML = '';
+  for (let i=1;i<=w;i++) {
+    const score = crunchScore(i);
+    const cell = document.createElement('div');
+    cell.className = 'week-cell'+(i===state.currentWeek?' current':'')+(i===state.selectedWeek?' selected':'');
+    cell.style.background = heatColor(score);
+    const hasAssign = state.assignments.some(a=>a.week===i&&!a.done);
+    cell.innerHTML = `<span class="wnum">${i}</span>${hasAssign?'<span class="wdot"></span>':''}`;
+    cell.onclick = () => selectWeek(i);
+    cell.onmouseenter = e => showTooltip(e,i,score);
+    cell.onmouseleave = hideTooltip;
+    grid.appendChild(cell);
+  }
+}
+
+function selectWeek(w) {
+  state.selectedWeek = w;
+  save();
+  renderAll();
+}
+
+function updateCrunchHero(w) {
+  const score = crunchScore(w);
+  const el = document.getElementById('crunch-score');
+  el.textContent = score;
+  el.className = 'crunch-number '+(score<30?'low':score<65?'mid':'high');
+  const wa = state.assignments.filter(a=>a.week===w&&!a.done);
+  const tw = wa.reduce((s,a)=>s+a.weight,0);
+  let status, desc;
+  if (!score) { status='All Clear'; desc='Nothing due this week. Good time to get ahead.'; }
+  else if (score<30) { status='Smooth Sailing'; desc=`${wa.length} light task${wa.length!==1?'s':''} due. Easy week.`; }
+  else if (score<65) { status='Getting Spicy'; desc=`${wa.length} assignment${wa.length!==1?'s':''} due worth ${tw}% combined.`; }
+  else { status='Full Crunch'; desc=`${wa.length} high-stakes task${wa.length!==1?'s':''} due (${tw}% total). This week needs serious focus.`; }
+  document.getElementById('crunch-status').textContent = status;
+  document.getElementById('crunch-desc').textContent = desc;
+  document.getElementById('crunch-week-label').textContent = w;
+  document.getElementById('assign-week-label').textContent = w;
+  document.getElementById('cur-week-label').textContent = state.selectedWeek;
+}
+
+// ── SUBJECTS ──────────────────────────────────────────────────────
+function renderSubjects() {
+  const list = document.getElementById('subjects-list');
+  list.innerHTML = state.subjects.map(s =>
+    `<div class="subject-pill"><span class="subject-dot" style="background:${s.color}"></span>${s.name}</div>`
+  ).join('');
+  const sel = document.getElementById('inp-subject');
+  sel.innerHTML = state.subjects.map(s =>
+    `<option value="${s.id}">${s.name}</option>`
+  ).join('');
+}
+
+function promptAddSubject() {
+  const name = prompt('Subject name:');
+  if (!name?.trim()) return;
+  state.subjects.push({id:nextId++,name:name.trim(),color:COLORS[state.subjects.length%COLORS.length]});
+  save(); renderAll();
+}
+
+// ── ASSIGNMENTS ───────────────────────────────────────────────────
+function renderAssignments() {
+  const list = document.getElementById('assign-list');
+  const upcoming = state.assignments
+    .filter(a=>!a.done && a.week >= state.selectedWeek)
+    .sort((a,b)=>a.week-b.week).slice(0,7);
+
+  if (!upcoming.length) {
+    list.innerHTML='<div style="color:var(--muted);font-size:13px;padding:8px 0">No upcoming assignments. Upload your course profile to import them automatically.</div>';
+  } else {
+    list.innerHTML = upcoming.map(a => {
+      const sub = state.subjects.find(s=>s.id===a.subjectId)||{name:'?',color:'#888'};
+      const diff = a.week - state.selectedWeek;
+      const urgency = diff<=0?'urgent':diff<=2?'soon':'ok';
+      const wClass = a.weight>=30?'heavy':a.weight>=20?'medium':'light';
+      return `<div class="assign-item" onclick="toggleDone(${a.id})">
+        <div class="assign-days ${urgency}">${a.week===state.selectedWeek?'NOW':diff+'w'}</div>
+        <div class="assign-info">
+          <div class="assign-name">${a.name}</div>
+          <div class="assign-meta"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${sub.color};margin-right:4px;vertical-align:middle"></span>${sub.name} · Week ${a.week}</div>
+        </div>
+        <div class="assign-weight ${wClass}">${a.weight}%</div>
+      </div>`;
+    }).join('');
+  }
+
+  document.getElementById('stat-total').textContent = state.assignments.length;
+  document.getElementById('stat-done').textContent = state.assignments.filter(a=>a.done).length;
+  document.getElementById('stat-due').textContent = state.assignments.filter(a=>!a.done).length;
+}
+
+function toggleDone(id) {
+  const a = state.assignments.find(x=>x.id===id);
+  if (a) { a.done = !a.done; save(); renderAll(); }
+}
+
+function addAssignment() {
+  const name = document.getElementById('inp-name').value.trim();
+  const subjectId = parseInt(document.getElementById('inp-subject').value);
+  const weight = parseInt(document.getElementById('inp-weight').value);
+  const week = parseInt(document.getElementById('inp-week').value);
+  if (!name||!week||week<1||week>state.semWeeks) return;
+  state.assignments.push({id:nextId++,name,subjectId,weight,week,done:false});
+  document.getElementById('inp-name').value='';
+  document.getElementById('inp-week').value='';
+  save(); renderAll();
+}
+
+// ── ASSESSMENT SCANNER ────────────────────────────────────────────
+const scanZone = document.getElementById('scan-zone');
+scanZone.addEventListener('dragover',e=>{e.preventDefault();scanZone.classList.add('drag-over')});
+scanZone.addEventListener('dragleave',()=>scanZone.classList.remove('drag-over'));
+scanZone.addEventListener('drop',e=>{e.preventDefault();scanZone.classList.remove('drag-over');if(e.dataTransfer.files[0])handleAssessFile(e.dataTransfer.files[0])});
+
+async function handleAssessFile(file) {
+  if (!file) return;
+  if (file.size > 30*1024*1024) { showScanError('File too large (max 30MB).'); return; }
+  showScanProg();
+  try {
+    const base64 = await toBase64(file);
+    const isPDF = file.type === 'application/pdf';
+    const result = await scanAssessments(base64, isPDF, file.type);
+    showScanResult(result);
+  } catch(e) {
+    showScanError('Could not scan file. Make sure it contains assessment information.');
+  }
+}
+
+async function scanAssessments(base64, isPDF, mimeType) {
+  const subjects = state.subjects.map(s => s.name).join(', ');
+  const weeks = state.semWeeks;
+  const prompt = `You are scanning a university course profile or assessment overview document.
+The student's subjects are: ${subjects}. This semester has ${weeks} weeks.
+Extract ALL assessments/assignments listed. Return ONLY a valid JSON object, no markdown, no explanation, no code fences:
+{"subjects":["Subject Name"],"assignments":[{"name":"Assignment name","weight":25,"week":6,"subject":"Subject Name"}]}
+Rules: weight is the percentage mark value (use 10 if not stated). Map due dates to week numbers 1-${weeks}.
+If no assessments found return: {"subjects":[],"assignments":[]}`;
+
+  const resp = await fetch('/.netlify/functions/claude', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt, imageBase64: base64, mimeType: mimeType || 'image/png' }),
+  });
+  if (!resp.ok) throw new Error('Function error ' + resp.status);
+  const { text } = await resp.json();
+  return JSON.parse(text.replace(/```json|```/g, '').trim());
+}
+
+function showScanProg(){
+  hide('scan-result');hide('scan-error');
+  document.getElementById('scan-progress').classList.add('active');
+}
+function showScanError(msg){
+  document.getElementById('scan-progress').classList.remove('active');
+  const el=document.getElementById('scan-error');el.textContent=msg;el.classList.add('active');
+  setTimeout(()=>el.classList.remove('active'),5000);
+}
+function hide(id){document.getElementById(id).classList.remove('active')}
+
+function showScanResult(data) {
+  document.getElementById('scan-progress').classList.remove('active');
+  if (!data.assignments?.length){showScanError('No assessments found. Try a different file.');return;}
+  pendingScan = data;
+  document.getElementById('result-count').textContent = data.assignments.length+' found';
+  const subjColorMap={};
+  (data.subjects||[]).forEach((s,i)=>subjColorMap[s]=COLORS[i%COLORS.length]);
+  document.getElementById('result-items').innerHTML = data.assignments.map(a=>{
+    const col = subjColorMap[a.subject]||'#7a7a9a';
+    return `<div class="result-item">
+      <div class="result-item-check"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><polyline points="1.5,5 4,7.5 8.5,2.5" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+      <div style="width:8px;height:8px;border-radius:50%;background:${col};flex-shrink:0"></div>
+      <div class="result-item-name">${a.name}</div>
+      <div class="result-item-meta">Wk ${a.week} · ${a.subject}</div>
+      <div class="result-item-weight">${a.weight}%</div>
+    </div>`;
+  }).join('');
+  document.getElementById('scan-result').classList.add('active');
+  document.getElementById('file-input').value='';
+}
+
+function discardScan(){pendingScan=null;hide('scan-result')}
+
+function importScan(){
+  if(!pendingScan) return;
+  const subjMap={};
+  state.subjects.forEach(s=>subjMap[s.name.toLowerCase()]=s.id);
+  (pendingScan.subjects||[]).forEach((name,i)=>{
+    const key=name.toLowerCase();
+    if(!subjMap[key]){
+      const ns={id:nextId++,name,color:COLORS[state.subjects.length%COLORS.length]};
+      state.subjects.push(ns);subjMap[key]=ns.id;
+    }
+  });
+  pendingScan.assignments.forEach(a=>{
+    const key=(a.subject||'').toLowerCase();
+    let subjectId=subjMap[key];
+    if(!subjectId&&state.subjects.length) subjectId=state.subjects[0].id;
+    state.assignments.push({id:nextId++,name:a.name,subjectId,weight:a.weight||10,week:Math.min(state.semWeeks,Math.max(1,a.week||1)),done:false});
+  });
+  pendingScan=null;hide('scan-result');
+  save();renderAll();
+}
+
+// ── TOOLTIP ────────────────────────────────────────────────────────
+function showTooltip(e,w,score){
+  const t=document.getElementById('tooltip');
+  const wa=state.assignments.filter(a=>a.week===w&&!a.done);
+  const names=wa.slice(0,3).map(a=>a.name).join('<br>');
+  t.innerHTML=`<strong>Week ${w}${w===state.currentWeek?' — now':''}</strong>Crunch: ${score}<br>${wa.length} assignment${wa.length!==1?'s':''} due${names?'<br><span style="opacity:0.6">'+names+'</span>':''}`;
+  t.style.display='block';
+}
+function hideTooltip(){document.getElementById('tooltip').style.display='none'}
+document.addEventListener('mousemove',e=>{
+  const t=document.getElementById('tooltip');
+  if(t.style.display==='block'){t.style.left=(e.clientX+14)+'px';t.style.top=(e.clientY-10)+'px';}
+});
+
+// ── UTILS ──────────────────────────────────────────────────────────
+function toBase64(file){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);
+  });
+}
+
+function resetApp(){
+  if(!confirm('Reset Sem and start over?')) return;
+  localStorage.removeItem(LS_KEY);
+  location.reload();
+}
+
+// ── BOOT ───────────────────────────────────────────────────────────
+if (load() && state.uni) {
+  // Returning user — skip onboarding
+  showApp();
+} else {
+  document.getElementById('onboarding').classList.remove('hidden');
+}
+</script>
+</body>
+</html>
